@@ -107,7 +107,6 @@ public class Neural_Network {
 						init(in, new double[in.length - 1][]), derivatives, input, bias.length - 1));
 			}
 			apply(gradient, l_rate);
-			
 		}
 	}
 
