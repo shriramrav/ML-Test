@@ -82,22 +82,17 @@ public class Neural_Network {
 			for (int x = 0; x < weights[layer].length; x++) {
 				double sum = 0;
 				for (int i = 0; i < weights[layer][0].length; i++) {
-					System.out.println("layer: " + layer);
-					System.out.println("x: " + x);
-					System.out.println("i: " + i);
 					tBias[layer][i] = derivatives[i];
 					tWeights[layer][x][i] = derivatives[i] * sigmoid(z[layer - 1][x]);
 					sum += derivatives[i] * weights[layer][x][i];
 				}
 				vector[x] = sum * sigmoidPrime(z[layer - 1][x]);
 			}
-//			System.out.println(Arrays.toString(vector));
-//			System.out.println("testing");
 			return this.backprop.func(tWeights, tBias, vector, input, --layer);
 		}
 	};
-	
-	public void train(int epochs, int batchSize, List<Pair<double[], double[]>> data) {
+
+	public void train(int epochs, int batchSize, List<Pair<double[], double[]>> data, double l_rate) {
 		for (int j = 0; j < epochs; j++) {
 			List<Pair<double[][][], double[][]>> gradient = new ArrayList<>();
 			for (int k = 0; k < data.size(); k++) {
@@ -108,27 +103,15 @@ public class Neural_Network {
 				for (int i = 0; i < derivatives.length; i++) {
 					derivatives[i] = costPrime(t[i], y[i]) * sigmoidPrime(z[z.length - 1][i]);
 				}
-				gradient.add(backprop.func(init(in, new double[in.length - 1][][]), init(in, new double[in.length - 1][]), derivatives, input, bias.length - 1));
+				gradient.add(backprop.func(init(in, new double[in.length - 1][][]),
+						init(in, new double[in.length - 1][]), derivatives, input, bias.length - 1));
 			}
-			apply(gradient);
+			apply(gradient, l_rate);
+			
 		}
 	}
 
-	public void test(List<Pair<double[], double[]>> data) {
-		double[] input = data.get(0).getA();
-		double[] y = data.get(0).getB();
-		double[] prediction = predict(input);
-		double[] derivatives = new double[bias[bias.length - 1].length];
-		for (int i = 0; i < derivatives.length; i++) {
-			derivatives[i] = costPrime(prediction[i], y[i]) * sigmoidPrime(z[z.length - 1][i]);
-		}
-		
-		
-		backprop.func(init(in, new double[in.length - 1][][]), init(in, new double[in.length - 1][]), derivatives, input, bias.length - 1);
-	}
-
-	private void apply(Pair<double[][][], double[][]> p) {
-		double l_rate = 0.0001;
+	private void apply(Pair<double[][][], double[][]> p, double l_rate) {
 		double[][][] w = p.getA();
 		double[][] b = p.getB();
 		for (int layer = 0; layer < w.length; layer++) {
@@ -141,9 +124,9 @@ public class Neural_Network {
 		}
 	}
 
-	private void apply(List<Pair<double[][][], double[][]>> gradient) {
+	private void apply(List<Pair<double[][][], double[][]>> gradient, double l_rate) {
 		for (int i = 0; i < gradient.size(); i++) {
-			apply(gradient.get(i));
+			apply(gradient.get(i), l_rate);
 		}
 	}
 
@@ -155,7 +138,6 @@ public class Neural_Network {
 		return bias;
 	}
 
-	// temporary, delete later
 	public double[][] getZ() {
 		return z;
 	}
@@ -165,7 +147,15 @@ public class Neural_Network {
 	}
 
 	private double costPrime(double x, double y) {
-		return 2 * (y - x);
+		return 2 * (x - y);
+	}
+
+	private double cost(double[] x, double[] y) {
+		double sum = 0; 
+		for (int i = 0 ; i < x.length; i++) {
+			sum += Math.pow(x[i] - y[i], 2);	
+		}
+		return sum;
 	}
 
 	private double sigmoid(double x) {
@@ -174,13 +164,5 @@ public class Neural_Network {
 
 	private double sigmoidPrime(double x) {
 		return Math.pow(Math.E, -x) / Math.pow(1 + Math.pow(Math.E, -x), 2);
-	}
-	
-	private int[] parse(double[] x) {
-		int[] y = new int[x.length];
-		for (int i = 0; i < x.length; i++) {
-			y[i] = (int)x[i];
-		}
-		return y;
 	}
 }
