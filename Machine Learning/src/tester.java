@@ -1,25 +1,21 @@
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class tester {
 	public static void main(String[] args) {
-		Neural_Network net = new Neural_Network(new int[] {2, 10, 2});
-		System.out.println("Before test");
-		System.out.println(Arrays.toString(net.predict(new double[] {1, 0})));
-		System.out.println(Arrays.toString(net.predict(new double[] {1, 1})));
-		System.out.println(Arrays.toString(net.predict(new double[] {0, 0})));
-		System.out.println(Arrays.toString(net.predict(new double[] {1, 0})));
-		List<Pair<double[], double[]>> list = new ArrayList<>();
-		list.add(new Pair<double[], double[]>(new double[] {1, 0}, new double[] {1, 0}));
-		list.add(new Pair<double[], double[]>(new double[] {0, 1}, new double[] {0, 1}));
-		list.add(new Pair<double[], double[]>(new double[] {1, 1}, new double[] {1, 1}));
-		list.add(new Pair<double[], double[]>(new double[] {0, 0}, new double[] {0, 0}));
-		net.train(10000, 0, list, 0.05);
-		System.out.println("after test");
-		System.out.println(Arrays.toString(net.predict(new double[] {1, 0})));
-		System.out.println(Arrays.toString(net.predict(new double[] {0, 1})));
-		System.out.println(Arrays.toString(net.predict(new double[] {1, 1})));
-		System.out.println(Arrays.toString(net.predict(new double[] {0, 0})));
+		String LABEL_FILE = "src\\" + "trainLabel.idx1-ubyte";
+		String IMAGE_FILE = "src\\" + "trainImage.idx3-ubyte";
+		Neural_Network net = new Neural_Network(new int[] { (28 * 28), 200, 80, 10 });
+		List<Pair<double[], double[]>> data = MNIST.combine(MNIST.getImages(IMAGE_FILE), MNIST.getLabels(LABEL_FILE));
+		Collections.shuffle(data);
+		net.train(3, 100, data, 0.01);
+		int test = 10001;
+		System.out.println("TRIAL:");
+		System.out.println("X:");
+		System.out.println(MNIST.render(data.get(test).getA()));
+		System.out.println("Y:");
+		System.out.println(Arrays.toString(data.get(test).getB()));
+		System.out.println("Prediction: " + Neural_Network.argMax(net.predict(data.get(test).getA())));
 	}
 }

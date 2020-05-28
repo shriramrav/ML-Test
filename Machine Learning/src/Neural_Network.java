@@ -31,7 +31,7 @@ public class Neural_Network {
 			x[i] = new double[in[i]][in[i + 1]];
 			for (int j = 0; j < x[i].length; j++) {
 				for (int u = 0; u < x[i][j].length; u++) {
-					x[i][j][u] = r.nextDouble();
+					x[i][j][u] = (r.nextDouble() * 2) - 1;
 				}
 			}
 		}
@@ -94,19 +94,23 @@ public class Neural_Network {
 
 	public void train(int epochs, int batchSize, List<Pair<double[], double[]>> data, double l_rate) {
 		for (int j = 0; j < epochs; j++) {
-			List<Pair<double[][][], double[][]>> gradient = new ArrayList<>();
-			for (int k = 0; k < data.size(); k++) {
-				double[] input = data.get(k).getA();
-				double[] y = data.get(k).getB();
-				double[] t = predict(input);
-				double[] derivatives = new double[bias[bias.length - 1].length];
-				for (int i = 0; i < derivatives.length; i++) {
-					derivatives[i] = costPrime(t[i], y[i]) * sigmoidPrime(z[z.length - 1][i]);
+			System.out.println("epoch: " + (j + 1));
+			final int MAX_BATCH = (int) 10000 / batchSize;
+			for (int u = 0; u < MAX_BATCH; u++) {
+				List<Pair<double[][][], double[][]>> gradient = new ArrayList<>();
+				for (int k = u * batchSize; k < (u * batchSize) + batchSize; k++) {
+					double[] input = data.get(k).getA();
+					double[] y = data.get(k).getB();
+					double[] t = predict(input);
+					double[] derivatives = new double[bias[bias.length - 1].length];
+					for (int i = 0; i < derivatives.length; i++) {
+						derivatives[i] = costPrime(t[i], y[i]) * sigmoidPrime(z[z.length - 1][i]);
+					}
+					gradient.add(backprop.func(init(in, new double[in.length - 1][][]),
+							init(in, new double[in.length - 1][]), derivatives, input, bias.length - 1));
 				}
-				gradient.add(backprop.func(init(in, new double[in.length - 1][][]),
-						init(in, new double[in.length - 1][]), derivatives, input, bias.length - 1));
+				apply(gradient, l_rate);		
 			}
-			apply(gradient, l_rate);
 		}
 	}
 
@@ -149,13 +153,47 @@ public class Neural_Network {
 		return 2 * (x - y);
 	}
 
-	private double cost(double[] x, double[] y) {
-		double sum = 0; 
+	public double[] softmax(double[] x) {
+		double sum = sum(x);
+		double[] y = new double[x.length];
+		for (int i = 0 ; i < y.length; i++) {
+			y[i] = x[i] / sum;
+		}
+		return y;
+	}
+	
+	public static int argMax(double[] x) {
+		int ctr = 0;
+		for (int i = 1; i < x.length; i++) {
+			if (x[ctr] < x[i]) {
+				ctr = i;
+			}
+		}
+		return ctr;
+	}
+	
+	
+	
+	
+	public double sum(double[] x) {
+		double sum = 0;
 		for (int i = 0 ; i < x.length; i++) {
-			sum += Math.pow(x[i] - y[i], 2);	
+			sum += x[i];
 		}
 		return sum;
 	}
+	
+	
+	
+	
+	
+//	private double cost(double[] x, double[] y) {
+//		double sum = 0; 
+//		for (int i = 0 ; i < x.length; i++) {
+//			sum += Math.pow(x[i] - y[i], 2);	
+//		}
+//		return sum;
+//	}
 
 	private double sigmoid(double x) {
 		return 1 / (1 + Math.pow(Math.E, -x));
